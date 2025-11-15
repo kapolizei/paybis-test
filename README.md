@@ -7,8 +7,7 @@
 1. Клонируйте репозиторий:
 
     ```bash
-    git clone <URL вашего репозитория>
-    cd CryptoRateTracker
+    git clone https://github.com/kapolizei/paybis-test
     ```
 
 2. Установите зависимости:
