@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\CryptoRate;
+use App\Service\CryptoRateFetcher;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,34 +19,46 @@ class ApiController extends AbstractController
         $this->entityManager = $entityManager;
     }
 
-    #[Route('/fetch/{symbol}/{quote}', name: 'fetch_and_save_default')]
-    #[Route('/fetch/{symbol}/{quote}/{date}', name: 'fetch_and_save')]
-    public function fetchAndSave(string $symbol = 'all', string $quote = 'USD', string $date = null): Response
+     #[Route('/fetch/{symbol}/{quote}/', name: 'fetch')]
+    public function fetch(string $symbol, string $quote, CryptoRateFetcher $cryptoRateFetcher): JsonResponse
     {
-        if ($symbol !== 'all') {
-            if (!$date) {
-                $cryptoRate = $this->entityManager->getRepository(CryptoRate::class)->findOneBy(['currencyPair' => $symbol, 'quoteCurrency' => $quote], ['id' => 'DESC']);
-            } else {
-                $cryptoRate = $this->entityManager->getRepository(CryptoRate::class)->findCurrencyPairRateByDate($symbol, $date);
-            }
-            $responseData = [
-                $symbol => $cryptoRate ? $cryptoRate->exportToArray() : null,
-            ];
+
+        if ($symbol === "all") {
+            $symbols = ['BTC', 'ETH', 'XRP', 'SOL'];
+            $cryptoRateFetcher->fetchRates('', $quote, $symbols);
+            $fromDb = $this->findMany($symbols, $quote);
         } else {
-            $responseData = $this->fetchAllRates($quote);
+            $fromDb = $this->findOne($symbol, $quote);
         }
-        return new JsonResponse($responseData);
+        return new JsonResponse($fromDb);
+
     }
 
-    private function fetchAllRates(string $quote = 'USD'): array
+    private function findMany(array $symbols, string $quote): array
     {
-        $symbols = ['BTC', 'ETH', 'XRP'];
+        $symbols = ['BTC', 'ETH', 'XRP', 'SOL'];
         $responseData = [];
 
         foreach ($symbols as $symbol) {
-            $cryptoRate = $this->entityManager->getRepository(CryptoRate::class)->findOneBy(['currencyPair' => $symbol, 'quoteCurrency' => $quote], ['id' => 'DESC']);
+            $cryptoRate = $this->entityManager->getRepository(CryptoRate::class)->findOneBy([
+                'currencyPair' => $symbol, 
+                'quoteCurrency' => $quote
+            ],['id' => 'DESC']);
             $responseData[$symbol] = $cryptoRate ? $cryptoRate->exportToArray() : null;
         }
         return $responseData;
     }
+
+    private function findOne($symbol, $quote): array
+    {
+        $responseData = [];
+        $cryptoRate = $this->entityManager->getRepository(CryptoRate::class)->findOneBy([
+            'currencyPair' => $symbol,
+            'quoteCurrency' => $quote,
+        ], ['id' => 'DESC']);
+
+        $responseData[$symbol] = $cryptoRate ? $cryptoRate->exportToArray() : null;
+        return $responseData;
+    }
+
 }

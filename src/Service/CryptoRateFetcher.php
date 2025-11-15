@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Service;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\CryptoRate;
@@ -14,7 +16,7 @@ class CryptoRateFetcher
     private $apiKey;
 
 
-    public function __construct(LoggerInterface $logger, EntityManagerInterface $entityManager,ParameterBagInterface $params)
+    public function __construct(LoggerInterface $logger, EntityManagerInterface $entityManager, ParameterBagInterface $params)
     {
         $this->logger = $logger;
         $this->entityManager = $entityManager;
@@ -24,17 +26,16 @@ class CryptoRateFetcher
     public function fetchRates(string $symbol, string $quote, array $symbols = []): array
     {
         $client = HttpClient::create();
-        $url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+
+        $symbolsToFetch = !empty($symbols) ? $symbols : [$symbol];
+
+        $url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest';
 
         $query = [
-            'start' => 1,
-            'limit' => 5,
+            'symbol' => implode(',', $symbolsToFetch),
             'convert' => $quote,
         ];
 
-        if (!empty($symbols)) {
-            $query['symbol'] = implode(',', $symbols);
-        }
         try {
             $response = $client->request('GET', $url, [
                 'headers' => [
@@ -44,32 +45,41 @@ class CryptoRateFetcher
             ]);
 
             if ($response->getStatusCode() !== 200) {
-                throw new \RuntimeException('Error fetching rates');
+                throw new \RuntimeException('Error fetching rates: ' . $response->getContent(false));
             }
 
-            $data = $response->toArray()['data'];
-            foreach ($data as $item) {
+            $responseData = $response->toArray();
+            $data = $responseData['data'] ?? [];
 
+            foreach ($data as $symbolKey => $item) {
                 $entity = new CryptoRate();
                 $entity->setCurrencyPair($item['symbol']);
                 $entity->setQuoteCurrency($quote);
+
                 if (isset($item['quote'][$quote]['price'])) {
                     $entity->setRate($item['quote'][$quote]['price']);
                 }
 
-                $timestamp = new \DateTime($item['last_updated']);
+                // last_updated находится внутри quote
+                $timestamp = new \DateTime($item['quote'][$quote]['last_updated']);
                 $entity->setTimestamp($timestamp);
+
                 $this->entityManager->persist($entity);
+
+                $this->logger->info("Saved rate for {$item['symbol']}: {$item['quote'][$quote]['price']}");
             }
+
             $this->entityManager->flush();
+
             return $data;
+
         } catch (\Throwable $e) {
             $this->logger->error('Failed to fetch crypto rates', [
                 'error' => $e->getMessage(),
+                'url' => $url,
                 'query' => $query,
             ]);
             throw $e;
         }
     }
 }
-
