@@ -60,51 +60,62 @@
 
 #### Получение курсов нескольких криптовалют
 
-Для получения курсов нескольких популярных криптовалют (например, BTC, ETH и XRP) используйте следующий запрос:
+Для получения курсов нескольких популярных криптовалют (например, BTC, ETH, XRP, SOL) используйте следующий запрос:
 
 ## GET /fetch/all/USD
 
 ```bash
 {
-  "BTC": {
-    "id": 568,
-    "pair": "BTC",
-    "price": "94232.500987285",
-    "quoteCurrency": "USD",
-    "time": {
-      "date": "2025-01-08 19:54:00.000000",
-      "timezone_type": 2,
-      "timezone": "Z"
+    "BTC": {
+        "id": 62,
+        "pair": "BTC",
+        "price": "95185.112149896",
+        "quoteCurrency": "USD",
+        "time": {
+            "date": "2025-11-15 21:48:00.000000",
+            "timezone_type": 2,
+            "timezone": "Z"
+        }
+    },
+    "ETH": {
+        "id": 63,
+        "pair": "ETH",
+        "price": "3158.3860404151",
+        "quoteCurrency": "USD",
+        "time": {
+            "date": "2025-11-15 21:48:00.000000",
+            "timezone_type": 2,
+            "timezone": "Z"
+        }
+    },
+    "XRP": {
+        "id": 65,
+        "pair": "XRP",
+        "price": "2.2206062671414",
+        "quoteCurrency": "USD",
+        "time": {
+            "date": "2025-11-15 21:48:00.000000",
+            "timezone_type": 2,
+            "timezone": "Z"
+        }
+    },
+    "SOL": {
+        "id": 64,
+        "pair": "SOL",
+        "price": "138.99856189229",
+        "quoteCurrency": "USD",
+        "time": {
+            "date": "2025-11-15 21:47:00.000000",
+            "timezone_type": 2,
+            "timezone": "Z"
+        }
     }
-  },
-  "ETH": {
-    "id": 574,
-    "pair": "ETH",
-    "price": "3280.3316558201",
-    "quoteCurrency": "USD",
-    "time": {
-      "date": "2025-01-08 19:55:00.000000",
-      "timezone_type": 2,
-      "timezone": "Z"
-    }
-  },
-  "XRP": {
-    "id": 581,
-    "pair": "XRP",
-    "price": "2.3191023595611",
-    "quoteCurrency": "USD",
-    "time": {
-      "date": "2025-01-08 19:55:00.000000",
-      "timezone_type": 2,
-      "timezone": "Z"
-    }
-  }
 }
 ```
 
 
 ## Структура проекта
 
-- `src/Controller/ApiController.php` — Контроллер для API, который предоставляет курсы криптовалют
-- `src/Entity/CryptoRate.php` — Сущность для хранения информации о курсах криптовалют.
-- `src/Service/CryptoRateFetcher.php` — Сервис для получения данных о курсах криптовалют с API CoinMarketCap, и дальнейшее сохранение в бд
+- `src/Controller/ApiController.php` — Контроллер для API, который предоставляет курсы криптовалют.
+- `src/Entity/CryptoRate.php` — Entity для хранения информации о курсах криптовалют.
+- `src/Service/CryptoRateFetcher.php` — Сервис для получения данных о курсах криптовалют с API CoinMarketCap, и дальнейшее сохранение в бд.
